@@ -1,0 +1,55 @@
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+package-lock.json
+.env
+.env.local
+.env.*.local
+
+# Output
+dist/
+build/
+.tmp/
+.temp/
+.cache/
+
+# Logs
+logs/
+*.log
+*.log.*
+
+# Coverage
+coverage/
+.nyc_output/
+
+# VSCode
+.vscode/
+.history/
+
+# OS / Sistem dosyaları
+.DS_Store
+Thumbs.db
+
+# Test
+test-results/
+jest-cache/
+jest-coverage/
+
+# DevTool özel
+devtool/output/
+devtool/cache/
+
+# PM2 Logs
+pids/
+*.pid
+*.seed
+
+# ESLint/Prettier cache
+.eslintcache
+.prettiercache
+
+# Optional DB / Mongo exports
+dump/
