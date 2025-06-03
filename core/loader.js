@@ -1,24 +1,25 @@
 import fs from "fs";
 import path from "path";
 import { pathToFileURL } from "url";
+import { v4 as uuidv4 } from "uuid";
 import { registerAutoloadedFile } from "./registry.js";
 
 /**
  * 📁 Belirtilen klasördeki tüm .js dosyalarını dinamik olarak içe aktarır
- * ve her dosyayı registry'ye kaydeder.
+ * ve her fonksiyonu registry'ye kaydeder
  *
- * @param {string} dir - Göreceli klasör yolu (örnek: "./controllers")
+ * @param {string} dir - Göreceli klasör yolu (örn: "./controllers")
  */
 async function loadFolder(dir = "./controllers") {
   const absPath = path.resolve(dir);
-  const folderType = path.basename(absPath); // örn: controllers, middlewares, validations
+  const folderType = path.basename(absPath); // örnek: controllers, middlewares, validations
 
   if (!fs.existsSync(absPath)) return;
 
   const files = fs.readdirSync(absPath);
 
   for (const file of files) {
-    if (!file.endsWith(".js")) continue;
+    if (!file.toLowerCase().endsWith(".js")) continue;
 
     const fullPath = path.join(absPath, file);
     const fileURL = pathToFileURL(fullPath).href;
@@ -30,7 +31,6 @@ async function loadFolder(dir = "./controllers") {
       for (const [exportName, fn] of entries) {
         if (typeof fn !== "function") continue;
 
-        // Fonksiyon tipi tahmini: middleware / validation / controller
         const isMiddleware = !!fn.middlewareName;
         const isValidation = !!fn.validationName;
         const isController = !!fn.controllerName;
@@ -44,6 +44,7 @@ async function loadFolder(dir = "./controllers") {
           : folderType;
 
         const meta = {
+          id: uuidv4(), // 🎯 Benzersiz ID eklendi
           type,
           filename: file,
           fullPath,
@@ -60,11 +61,43 @@ async function loadFolder(dir = "./controllers") {
 
         registerAutoloadedFile(meta);
       }
+
+      // 🔁 Default export desteği
+      if (typeof module.default === "function") {
+        const fn = module.default;
+
+        const isMiddleware = !!fn.middlewareName;
+        const isValidation = !!fn.validationName;
+        const isController = !!fn.controllerName;
+
+        const type = isMiddleware
+          ? "middleware"
+          : isValidation
+          ? "validation"
+          : isController
+          ? "controller"
+          : folderType;
+
+        const meta = {
+          id: uuidv4(),
+          type,
+          filename: file,
+          fullPath,
+          exportName: "default",
+          name:
+            fn.middlewareName ||
+            fn.validationName ||
+            fn.controllerName ||
+            "default",
+          expectedQuery: fn.expectedQuery || [],
+          expectedParams: fn.expectedParams || [],
+          description: fn.description || "",
+        };
+
+        registerAutoloadedFile(meta);
+      }
     } catch (err) {
-      console.error(
-        `❌ Hata (Autoload: ${folderType}): ${file} dosyası yüklenemedi → ${file}`,
-        err
-      );
+      console.error(`❌ Hata (Autoload: ${folderType}) → ${file}`, err.message);
     }
   }
 }
@@ -73,15 +106,12 @@ async function loadFolder(dir = "./controllers") {
 export async function loadControllers() {
   await loadFolder("./controllers");
 }
-
 export async function loadMiddlewares() {
   await loadFolder("./middlewares");
 }
-
 export async function loadValidations() {
   await loadFolder("./validations");
 }
-
 export async function loadRoutes() {
   await loadFolder("./routes");
 }

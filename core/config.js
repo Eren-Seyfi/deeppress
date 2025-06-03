@@ -1,29 +1,39 @@
 import { registerConfig } from "./registry.js";
 
-// 📦 Uygulama genel yapılandırmalarının tutulduğu nesne
-const config = {};
+// 📦 Varsayılan ayarlar
+let config = {
+  port: 3000,
+  mode: "production",
+  devtool: false,
+};
 
 /**
  * ✅ Config değerlerini toplu olarak ayarlamak için kullanılır
- * @param {object} values - Ayarlanacak config değerleri (key-value formatında)
+ * @param {object} values - Ayarlanacak config değerleri (key-value)
  */
 function set(values) {
   if (typeof values !== "object" || values === null || Array.isArray(values)) {
     throw new Error("Config.set(values) → values must be a plain object.");
   }
 
-  Object.entries(values).forEach(([key, val]) => {
-    config[key] = val;
-  });
+  let hasChanged = false;
 
-  // 🧠 DevTool & registry sistemine bildir
-  registerConfig(getAll());
+  for (const [key, val] of Object.entries(values)) {
+    if (config[key] !== val) {
+      config[key] = val;
+      hasChanged = true;
+    }
+  }
+
+  if (hasChanged) {
+    registerConfig(getAll()); // 🔄 Sadece değişiklik varsa bildir
+  }
 }
 
 /**
  * ✅ Belirli bir config anahtarını döner
- * @param {string} key - İstenen config anahtarı
- * @returns {*} - Değer ya da undefined
+ * @param {string} key - Anahtar ismi
+ * @returns {*} - Değeri ya da undefined
  */
 function get(key) {
   return config[key];
@@ -31,10 +41,23 @@ function get(key) {
 
 /**
  * 📋 Tüm config ayarlarını döner
- * @returns {object} - Tüm config nesnesinin kopyası
+ * @returns {object}
  */
 function getAll() {
   return { ...config };
 }
 
-export { set, get, getAll };
+/**
+ * ♻ Yapılandırmayı başa döndürür (isteğe bağlı)
+ */
+function reset() {
+  config = {
+    port: 3000,
+    mode: "production",
+    devtool: false,
+  };
+
+  registerConfig(getAll());
+}
+
+export { set, get, getAll, reset };

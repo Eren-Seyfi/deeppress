@@ -1,10 +1,11 @@
+import { v4 as uuidv4 } from "uuid";
 import { registerValidation, registerValidationUsage } from "./registry.js";
 
-// 📦 Tüm validation fonksiyonları burada tutulur
+// 📦 Tüm validation fonksiyonları burada tutulur (id → { name, fn })
 const validations = {};
 
-// 🌐 Global olarak aktif validasyonlar
-const globalValidations = [];
+// 🌐 Global olarak aktif validasyon ID'leri
+const globalValidationIds = [];
 
 /**
  * ✅ Yeni bir validasyon tanımlar
@@ -20,20 +21,19 @@ function create(name, fn, isGlobal = false, meta = {}) {
     );
   }
 
-  if (validations[name]) {
-    console.warn(`⚠ Validation "${name}" zaten tanımlı. Üzerine yazılıyor.`);
-  }
+  const id = uuidv4();
 
   // Etiketle
   fn.validationName = name;
+  fn.validationId = id;
   fn.expectedQuery = meta.expectedQuery || [];
   fn.expectedParams = meta.expectedParams || [];
   fn.description = meta.description || "";
 
-  validations[name] = fn;
+  validations[id] = { name, fn };
 
   if (isGlobal) {
-    globalValidations.push(fn);
+    globalValidationIds.push(id);
   }
 
   // 🧠 DevTool için kayıt
@@ -50,49 +50,40 @@ function create(name, fn, isGlobal = false, meta = {}) {
  * @returns {Function|Function[]} - Express uyumlu fonksiyonlar
  */
 function use(names) {
-  if (typeof names === "string") {
-    const fn = validations[names];
-    if (!fn) {
-      const mevcutlar = Object.keys(validations).join(", ") || "Hiç yok";
+  const byName = (name) => {
+    const found = Object.values(validations).find((v) => v.name === name);
+    if (!found) {
+      const mevcutlar =
+        Object.values(validations)
+          .map((v) => v.name)
+          .join(", ") || "Hiç yok";
       throw new Error(
-        `Validation "${names}" tanımlı değil. Mevcutlar: ${mevcutlar}`
+        `Validation "${name}" tanımlı değil. Mevcutlar: ${mevcutlar}`
       );
     }
 
-    registerValidationUsage(names, "<used dynamically>");
-    return fn;
-  }
+    registerValidationUsage(found.name, "<used dynamically>");
+    return found.fn;
+  };
 
-  if (Array.isArray(names)) {
-    return names.map((name) => {
-      const fn = validations[name];
-      if (!fn) {
-        const mevcutlar = Object.keys(validations).join(", ") || "Hiç yok";
-        throw new Error(
-          `Validation "${name}" tanımlı değil. Mevcutlar: ${mevcutlar}`
-        );
-      }
-
-      registerValidationUsage(name, "<used dynamically>");
-      return fn;
-    });
-  }
+  if (typeof names === "string") return byName(names);
+  if (Array.isArray(names)) return names.map(byName);
 
   throw new Error("validation.use yalnızca string veya string[] alabilir.");
 }
 
 /**
- * 📋 Tüm validasyonları döner
+ * 📋 Tüm validasyonları döner (id → { name, fn })
  */
 function getAll() {
   return { ...validations };
 }
 
 /**
- * 🌐 Global validasyonları döner
+ * 🌐 Global validasyonları döner (yalnızca fonksiyonlar)
  */
 function getAllGlobal() {
-  return [...globalValidations];
+  return globalValidationIds.map((id) => validations[id].fn);
 }
 
 export { create, use, getAll, getAllGlobal };

@@ -1,27 +1,34 @@
 // core/registry.js
+import { v4 as uuidv4 } from "uuid";
 
 const registry = {
-  groups: [], // Route grupları (iç içe destekli)
-  controllers: {}, // Controller bilgileri ve kullanım yerleri
-  middlewares: {}, // Middleware bilgileri ve kullanım yerleri
-  validations: {}, // ✅ Validation bilgileri ve kullanım yerleri
-  config: {}, // Uygulama yapılandırması
-  autoloadedFiles: [], // Yüklenen dosya listesi
-  errors: [], // Yakalanan hatalar
+  groups: [],
+  controllers: {},
+  middlewares: {},
+  validations: {},
+  config: {},
+  autoloadedFiles: [],
+  errors: [],
 };
 
 const groupStack = [];
 
 // 📍 Yeni grup başladığında
 function registerGroupStart({
+  id,
   basePath,
+  description = "",
   params = [],
+  expectedQuery = [],
   middlewares = [],
   validations = [],
 }) {
   const newGroup = {
+    id: id || uuidv4(),
     basePath,
+    description,
     params,
+    expectedQuery,
     middlewares,
     validations,
     routes: [],
@@ -45,20 +52,24 @@ function registerGroupEnd() {
 
 // ➕ Yeni route tanımlandığında
 function registerRoute({
+  id = uuidv4(),
   method,
   path,
   fullPath,
   controllers = [],
+  controllerIds = [],
   middlewares = [],
   validations = [],
 }) {
   const current = groupStack[groupStack.length - 1];
   if (current) {
     current.routes.push({
+      id,
       method,
       path,
       fullPath,
       controllers,
+      controllerIds,
       middlewares,
       validations,
     });
@@ -70,11 +81,17 @@ function registerRoute({
 }
 
 // 🎮 Controller tanımı
-function registerController(name, middlewares = []) {
-  registry.controllers[name] = registry.controllers[name] || {
-    middlewares,
-    routesUsedIn: [],
-  };
+function registerController(name, middlewareNames = [], meta = {}) {
+  if (!registry.controllers[name]) {
+    registry.controllers[name] = {
+      id: uuidv4(),
+      middlewares: middlewareNames || [],
+      routesUsedIn: [],
+      description: meta.description || "",
+      expectedParams: meta.expectedParams || [],
+      expectedQuery: meta.expectedQuery || [],
+    };
+  }
 }
 
 // 📌 Controller bir route’ta kullanıldığında
@@ -87,13 +104,16 @@ function registerControllerUsage(name, fullPath) {
 
 // 🧱 Middleware tanımı
 function registerMiddleware(name, isGlobal = false, meta = {}) {
-  registry.middlewares[name] = registry.middlewares[name] || {
-    usedIn: [],
-    isGlobal,
-    expectedQuery: meta.expectedQuery || [],
-    expectedParams: meta.expectedParams || [],
-    description: meta.description || "",
-  };
+  if (!registry.middlewares[name]) {
+    registry.middlewares[name] = {
+      id: uuidv4(),
+      usedIn: [],
+      isGlobal,
+      expectedQuery: meta.expectedQuery || [],
+      expectedParams: meta.expectedParams || [],
+      description: meta.description || "",
+    };
+  }
 }
 
 // 🧩 Middleware kullanımı
@@ -106,13 +126,16 @@ function registerMiddlewareUsage(name, fullPath) {
 
 // ✅ Validation tanımı
 function registerValidation(name, isGlobal = false, meta = {}) {
-  registry.validations[name] = registry.validations[name] || {
-    usedIn: [],
-    isGlobal,
-    expectedQuery: meta.expectedQuery || [],
-    expectedParams: meta.expectedParams || [],
-    description: meta.description || "",
-  };
+  if (!registry.validations[name]) {
+    registry.validations[name] = {
+      id: uuidv4(),
+      usedIn: [],
+      isGlobal,
+      expectedQuery: meta.expectedQuery || [],
+      expectedParams: meta.expectedParams || [],
+      description: meta.description || "",
+    };
+  }
 }
 
 // ✅ Validation kullanımı
@@ -125,7 +148,10 @@ function registerValidationUsage(name, fullPath) {
 
 // 📁 Autoload edilen dosya kaydı
 function registerAutoloadedFile(fileMeta) {
-  registry.autoloadedFiles.push(fileMeta);
+  registry.autoloadedFiles.push({
+    ...fileMeta,
+    id: uuidv4(),
+  });
 }
 
 // ⚙ Yapılandırma kaydı
@@ -135,7 +161,11 @@ function registerConfig(configObj) {
 
 // ❌ Hata kaydı
 function registerError(errorObj) {
-  registry.errors.push(errorObj);
+  registry.errors.push({
+    ...errorObj,
+    id: uuidv4(),
+    timestamp: new Date().toISOString(),
+  });
 }
 
 // 🧠 Kayıtları döndür

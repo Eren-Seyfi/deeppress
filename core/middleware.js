@@ -1,10 +1,11 @@
+import { v4 as uuidv4 } from "uuid";
 import { registerMiddleware, registerMiddlewareUsage } from "./registry.js";
 
-// 📦 Tanımlı middleware fonksiyonları burada tutulur
+// 📦 Tanımlı middleware fonksiyonları (id → { name, fn })
 const middlewares = {};
 
-// 🌐 Global olarak tanımlı middleware fonksiyonları
-const globalMiddlewares = [];
+// 🌐 Global olarak tanımlı middleware ID'leri
+const globalMiddlewareIds = [];
 
 /**
  * ✅ Middleware oluşturur
@@ -20,23 +21,20 @@ function create(name, fn, isGlobal = false, meta = {}) {
     );
   }
 
-  if (middlewares[name]) {
-    console.warn(`⚠ Middleware "${name}" zaten tanımlı. Üzerine yazılıyor.`);
-  }
+  const id = uuidv4();
 
-  // Metadata etiketleri fonksiyona eklenir
+  // Metadata fonksiyona gömülür
   fn.middlewareName = name;
+  fn.middlewareId = id;
   fn.description = meta.description || "";
   fn.expectedQuery = meta.expectedQuery || [];
   fn.expectedParams = meta.expectedParams || [];
   fn.controllerName = meta.controllerName || null;
 
-  // Kayıt
-  middlewares[name] = fn;
+  middlewares[id] = { name, fn };
 
-  // Global listeye ekle
-  if (isGlobal && !globalMiddlewares.includes(fn)) {
-    globalMiddlewares.push(fn);
+  if (isGlobal) {
+    globalMiddlewareIds.push(id);
   }
 
   // 📚 Registry'ye bildir
@@ -53,51 +51,39 @@ function create(name, fn, isGlobal = false, meta = {}) {
  * @returns {Function|Function[]} - Express uyumlu middleware fonksiyon(lar)ı
  */
 function use(names) {
-  if (typeof names === "string") {
-    const fn = middlewares[names];
-    if (!fn) {
-      const mevcutlar = Object.keys(middlewares).join(", ") || "Hiç yok";
+  const byName = (name) => {
+    const found = Object.values(middlewares).find((m) => m.name === name);
+    if (!found) {
+      const mevcutlar =
+        Object.values(middlewares)
+          .map((m) => m.name)
+          .join(", ") || "Hiç yok";
       throw new Error(
-        `Middleware "${names}" tanımlı değil. Mevcut olanlar: ${mevcutlar}`
+        `Middleware "${name}" tanımlı değil. Mevcut olanlar: ${mevcutlar}`
       );
     }
+    registerMiddlewareUsage(found.name, "<used dynamically>");
+    return found.fn;
+  };
 
-    registerMiddlewareUsage(names, "<used dynamically>");
-    return fn;
-  }
-
-  if (Array.isArray(names)) {
-    return names.map((name) => {
-      const fn = middlewares[name];
-      if (!fn) {
-        const mevcutlar = Object.keys(middlewares).join(", ") || "Hiç yok";
-        throw new Error(
-          `Middleware "${name}" tanımlı değil. Mevcut olanlar: ${mevcutlar}`
-        );
-      }
-
-      registerMiddlewareUsage(name, "<used dynamically>");
-      return fn;
-    });
-  }
+  if (typeof names === "string") return byName(names);
+  if (Array.isArray(names)) return names.map(byName);
 
   throw new Error("middleware.use yalnızca string veya string[] alabilir.");
 }
 
 /**
- * 📋 Tüm tanımlı middleware'leri döner
- * @returns {Object} middlewareName → fn
+ * 📋 Tüm tanımlı middleware'leri döner (id → { name, fn })
  */
 function getAll() {
   return { ...middlewares };
 }
 
 /**
- * 🌐 Global middleware fonksiyonlarını döner
- * @returns {Function[]} Sadece global tanımlılar
+ * 🌐 Sadece global middleware fonksiyonlarını döner
  */
 function getAllGlobal() {
-  return [...globalMiddlewares];
+  return globalMiddlewareIds.map((id) => middlewares[id].fn);
 }
 
 export { create, use, getAll, getAllGlobal };
