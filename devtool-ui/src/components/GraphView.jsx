@@ -1,7 +1,7 @@
 import { ReactFlow, useNodesState, useEdgesState } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { useDevtool } from "../hooks/useDevtool";
-import { generateGraphFromRegistry } from "../utils/generateGraphFromRegistry";
+import { generateGraphFromRegistry } from "../graph";
 
 export default function GraphView() {
   const { registry, isReady } = useDevtool();
