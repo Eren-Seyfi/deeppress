@@ -1,0 +1,8 @@
+@import "tailwindcss";
+
+@plugin "@tailwindcss/forms";
+@plugin "tailwind-scrollbar";
+
+body {
+  @apply scrollbar-thin scrollbar-thumb-gray-400 dark:scrollbar-thumb-gray-600;
+}

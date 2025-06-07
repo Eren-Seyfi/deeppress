@@ -1,4 +1,5 @@
-import { colorMap } from "./config.js";
+// src/graph/edgeBuilder.js
+
 
 export function createEdge(source, target, label, type) {
   return {
@@ -6,6 +7,6 @@ export function createEdge(source, target, label, type) {
     source,
     target,
     label,
-    style: { stroke: colorMap[type] || "#999" },
+   
   };
 }

@@ -1,0 +1,150 @@
+export const fakeRegistry = {
+  groups: [
+    {
+      id: "06c34549-fc1a-426b-93b1-8d13b626af19",
+      basePath: "/api",
+      description: "",
+      params: [],
+      expectedQuery: [],
+      middlewares: ["logger"],
+      validations: [],
+      routes: [],
+      children: [
+        {
+          id: "b390a4ab-fd38-44c8-b84d-b869680c6fef",
+          basePath: "/api/user",
+          description: "",
+          params: [],
+          expectedQuery: [],
+          middlewares: ["auth"],
+          validations: ["requireLang"],
+          routes: [
+            {
+              id: "80e4f4e4-4595-4907-85df-1ac0bd8cbc7a",
+              method: "GET",
+              path: "/:name/:surname/details",
+              fullPath: "/api/user/:name/:surname/details",
+              controllers: [
+                {
+                  name: "userDetailsWithQuery",
+                  id: "userDetailsWithQuery",
+                },
+              ],
+              controllerIds: [],
+              middlewares: [],
+              validations: [],
+            },
+          ],
+          children: [],
+        },
+      ],
+    },
+    {
+      id: "801e0a4b-a126-478b-a8ed-ec3bbd3f470c",
+      basePath: "/status",
+      description: "",
+      params: [],
+      expectedQuery: [],
+      middlewares: ["auth"],
+      validations: ["requireLang"],
+      routes: [
+        {
+          id: "7d29182e-5dae-4133-be62-dbd6016ee61b",
+          method: "GET",
+          path: "/ping",
+          fullPath: "/status/ping",
+          controllers: [
+            {
+              name: "ping",
+              id: "ping",
+            },
+          ],
+          controllerIds: [],
+          middlewares: [],
+          validations: [],
+        },
+      ],
+      children: [],
+    },
+    {
+      id: "e5ea3690-815b-45a6-bd86-ce6b1ceca5a2",
+      basePath: "/registry",
+      description: "",
+      params: [],
+      expectedQuery: [],
+      middlewares: [],
+      validations: [],
+      routes: [
+        {
+          id: "bc71265c-595b-42be-8a80-327f65451c2c",
+          method: "GET",
+          path: "/",
+          fullPath: "/registry",
+          controllers: [
+            {
+              name: "anonymous",
+              id: "anonymous",
+            },
+          ],
+          controllerIds: [],
+          middlewares: [],
+          validations: [],
+        },
+      ],
+      children: [],
+    },
+  ],
+  controllers: {
+    userDetailsWithQuery: {
+      id: "f95a1c05-13d6-4a0a-9d3d-94e4ffc46369",
+      middlewares: [],
+      routesUsedIn: ["<used dynamically>", "/api/user/:name/:surname/details"],
+      description: "",
+      expectedParams: [],
+      expectedQuery: [],
+    },
+    ping: {
+      id: "12b4e0c2-9ac0-41e6-91ad-c4660ea73cc1",
+      middlewares: [],
+      routesUsedIn: ["<used dynamically>", "/status/ping"],
+      description: "",
+      expectedParams: [],
+      expectedQuery: [],
+    },
+  },
+  middlewares: {
+    logger: {
+      id: "700b8051-41db-4bde-8cf3-7ce376db632b",
+      usedIn: ["<used dynamically>", "/api"],
+      isGlobal: true,
+      expectedQuery: [],
+      expectedParams: [],
+      description: "",
+    },
+    auth: {
+      id: "d135b5e5-82ee-4e65-a7e8-c6f13eb92895",
+      usedIn: ["<used dynamically>", "/api/user", "/status"],
+      isGlobal: false,
+      expectedQuery: [],
+      expectedParams: [],
+      description: "",
+    },
+  },
+  validations: {
+    requireLang: {
+      id: "9030bb44-7271-4395-b7f9-5c88e0ff46bb",
+      usedIn: ["<used dynamically>"],
+      isGlobal: false,
+      expectedQuery: [],
+      expectedParams: [],
+      description: "",
+    },
+  },
+  config: {
+    port: 4000,
+    mode: "dev",
+    devtool: true,
+  },
+  autoloadedFiles: [],
+  errors: [],
+};

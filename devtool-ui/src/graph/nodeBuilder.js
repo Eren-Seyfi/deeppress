@@ -1,15 +1,23 @@
-import { getNodeStyle } from "./utils.js";
+// src/graph/nodeBuilder.js
 
-export function createAddNodeFn(nodes, addedNodes) {
-  return (id, label, type, x, y) => {
+export function createAddNodeFn(nodes, addedNodes, theme) {
+  return (id, data, type, x, y, parentId = null) => {
     if (addedNodes.has(id)) return;
-    nodes.push({
+
+    const node = {
       id,
-      type: "default",
+      type,
       position: { x, y },
-      data: { label },
-      style: getNodeStyle(type, label),
-    });
+      data,
+    };
+
+    // Eğer bu node bir alt node ise, parent bilgilerini ekle
+    if (parentId) {
+      node.parentId = parentId;
+      node.extent = "parent"; // 👈 Alt node'lar ebeveynin sınırlarını aşamaz
+    }
+
+    nodes.push(node);
     addedNodes.add(id);
   };
 }
